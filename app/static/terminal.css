@@ -57,6 +57,13 @@ td, th { padding: 3px 12px; text-align: left; border-bottom: 1px solid var(--rul
 th { position: sticky; top: 0; background: var(--panel-light); color: var(--dim); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .empty { padding: 0 13px; color: var(--dim); }
+.variance-command form { display: flex; gap: 12px; align-items: center; padding: 10px 13px; }
+.variance-command .filters { border-bottom: 0; padding: 6px 13px 0; }
+.evidence { white-space: normal; min-width: 280px; max-width: 420px; }
+.evidence small { color: var(--subdued); }
+.remap { color: var(--warn); font-style: normal; }
+#tie-ok { color: var(--success); }
+td.code, .checksum code { font-size: 11px; }
 footer { padding: 7px var(--pad); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; position: sticky; bottom: 0; margin-top: auto; border-top: 1px solid var(--rule); background: var(--bg); color: var(--dim); font-size: 11px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (max-width:790px) { .command { display: block; } .shortcut { display: none; } .kpis { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; } .kpis span { padding: 0; border: 0; } }

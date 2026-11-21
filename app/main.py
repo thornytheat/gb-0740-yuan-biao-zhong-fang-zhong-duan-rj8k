@@ -5,6 +5,8 @@ from app.keys import ReplayError
 from app.modules import VIEWS, register
 from app.modules.m7_release.service import execute
 from app.modules.m7_release.store import Catalog
+from app.modules.m8_variance.service import CALIBERS
+from app.modules.m8_variance.store import StatementStore
 from app.web import fixture, record, repository
 from flask import Flask, abort, jsonify, render_template, request, url_for
 
@@ -21,6 +23,7 @@ def create_app(options=None):
     app.json.ensure_ascii = False
     app.json.sort_keys = False
     app.extensions["plans"] = Catalog(app.config["DB"])
+    app.extensions["statements"] = StatementStore(app.config["DB"].with_name("variance.sqlite3"))
     register(app)
 
     @app.get("/health")
@@ -44,6 +47,13 @@ def create_app(options=None):
         result = record(key) if key else execute(repository(), fixture("nightly"))[0]
         state = request.args.get("state")
         rows = [task for task in result["排程"] if not state or task["状态"] == state]
+        caliber = request.args.get("caliber", "platform")
+        if caliber not in CALIBERS:
+            abort(404)
+        variance = result.get("差额说明")
+        statement = None
+        if key and variance:
+            statement = app.extensions["statements"].get_by_plan(key)
         return render_template(
             f"{section}.html",
             views=VIEWS,
@@ -58,6 +68,11 @@ def create_app(options=None):
             tasks=rows,
             filter_state=state,
             latest=repository().latest() if section == "release" else [],
+            caliber=caliber,
+            variance=variance,
+            statement=statement,
+            statement_history=app.extensions["statements"].history() if section == "variance" else [],
+            audit_trail=app.extensions["statements"].audit_trail() if section == "variance" else [],
         )
 
     @app.get("/api/plans")

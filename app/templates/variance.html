@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% from 'lines.jinja' import panel %}
+{% block section %}
+{% if not variance %}
+<section class="panel output"><h2>$ variance explanation</h2><p class="empty">该计划未携带到达证据（arrivals），没有可出的差额说明。请选择「差额说明演练」样例。</p></section>
+{% else %}
+<section class="panel command variance-command"><h2>$ variance caliber <small>同一行在不同口径下只换责任方，原因不变</small></h2>
+  <div class="filters">
+    {% for code,name in variance['口径名称'].items() %}
+    <a href="{{ url_for('console',section='variance',plan=meta['编号'],sample=sample,caliber=code) }}" {% if caliber==code %}aria-current="true"{% endif %}>{{ name }}</a>
+    {% endfor %}
+  </div>
+  <form method="post" action="{{ url_for('variance.issue', plan=meta['编号']) }}" id="issue-form">
+    <button type="submit">签发说明到只追加账本</button>
+    <output id="issue-result" role="status">{% if statement %}已签发 {{ statement['说明编号'] }}（账本可回查）{% else %}尚未签发{% endif %}</output>
+  </form>
+</section>
+
+{% set check = variance['守恒校验'] %}
+<section class="panel checksum"><h2>$ variance tie <small>合计必须等于勾稽「行数变化」</small></h2>
+  <dl>
+    <div><dt>勾稽锚点（{{ variance['勾稽锚点']['文件摘要'][:16] }}…）</dt><dd>原行数 {{ variance['勾稽锚点']['原行数'] }} → 模拟行数 {{ variance['勾稽锚点']['模拟行数'] }}</dd></div>
+    <div><dt>差额合计 / 行数变化</dt><dd>{{ check['差额合计'] }} / {{ check['行数变化'] }}</dd></div>
+    <div><dt>明细合计 + 未解释合计</dt><dd>{{ check['明细合计'] }} + {{ check['未解释合计'] }} = {{ check['差额合计'] }}</dd></div>
+    <div><dt>勾稽一致</dt><dd id="tie-ok">{{ '一致，可对外' if check['勾稽一致'] else '不一致，拒绝出说明' }}</dd></div>
+  </dl>
+</section>
+
+<section class="panel output"><h2>$ reason mix <small>各原因占比（基点，可复算）</small></h2>
+  <div class="scroll"><table><thead><tr>
+    <th>原因</th><th>条数</th><th>影响行数</th><th>占比</th><th>占比基点</th>
+  </tr></thead><tbody>
+  {% for row in variance['原因汇总'] %}
+    <tr><td>{{ row['原因名称'] }} <code>{{ row['原因码'] }}</code></td><td class="num">{{ row['条数'] }}</td><td class="num">{{ row['影响行数'] }}</td><td class="num">{{ row['占比'] }}</td><td class="num">{{ row['占比基点'] }} bp</td></tr>
+  {% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="panel output"><h2>$ owner mix <small>{{ variance['口径名称'][caliber] }}下的补数责任方</small></h2>
+  <div class="scroll"><table><thead><tr><th>责任方</th><th>条数</th><th>行数</th><th>占比</th></tr></thead><tbody>
+  {% for row in variance['责任汇总'][caliber] %}
+    <tr><td>{{ row['责任方'] }}</td><td class="num">{{ row['条数'] }}</td><td class="num">{{ row['行数'] }}</td><td class="num">{{ row['占比'] }}</td></tr>
+  {% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="panel trailer"><h2>$ unexplained residual</h2>
+  <div>条数 <strong>{{ variance['未解释余量']['条数'] }}</strong></div>
+  <div>行数 <strong>{{ variance['未解释余量']['行数'] }}</strong>（{{ variance['未解释余量']['占比'] }}）</div>
+  <div>补数责任方 <strong>{{ variance['未解释余量']['补数责任方'] }}</strong></div>
+</section>
+
+{{ panel('分区差额', variance['分区差额']) }}
+
+<section class="panel output"><h2>$ explanation lines <small>每行附来源团队原始记录，可按行复算</small></h2>
+  <div class="scroll" tabindex="0"><table><thead><tr>
+    <th>行号</th><th>分区</th><th>原因</th><th>来源团队</th><th>原始行号</th><th>原始记录</th>
+    <th>业务键→目标键</th><th>影响行数</th><th>{{ variance['口径名称'][caliber] }}责任方</th><th>计入来源迟到</th><th>复算公式 / 证据</th>
+  </tr></thead><tbody>
+  {% for row in variance['明细'] %}
+    {% set owner = row['责任'][caliber] %}
+    <tr>
+      <td class="num">{{ row['说明行号'] }}</td>
+      <td>{{ row['分区'] }}</td>
+      <td>{{ row['原因名称'] }} <code>{{ row['原因码'] }}</code></td>
+      <td>{{ row['来源团队'] }}</td>
+      <td class="num">{{ row['原始行号'] if row['原始行号'] is not none else '—' }}</td>
+      <td>{{ row['原始记录'] or '—' }}</td>
+      <td>{{ row['业务键'] or '—' }} → {{ row['目标键'] or '—' }}{% if row['改键'] %} <em class="remap">（已改键）</em>{% endif %}</td>
+      <td class="num">{{ row['影响行数'] }}</td>
+      <td>{{ owner['责任方'] }}</td>
+      <td>{{ '是' if owner['计入来源迟到'] else '否' }}</td>
+      <td class="evidence">{{ row['复算证据']['复算公式'] }}<br><small>原始分区 {{ row['复算证据']['原始分区'] }} · 冻结后到达 {{ row['复算证据']['冻结后到达'] }}</small></td>
+    </tr>
+  {% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="panel output"><h2>$ immutable ledger <small>只追加；重放重试不新增，误删入口仍可回查</small></h2>
+  <div class="scroll"><table><thead><tr><th>说明编号</th><th>批次</th><th>签发时间</th><th>勾稽一致</th><th>未解释行数</th></tr></thead><tbody>
+  {% for item in statement_history %}
+    <tr><td>{{ item['说明编号'] }}</td><td>{{ item['批次编号'] }}</td><td>{{ item['签发时间'] }}</td><td>{{ '一致' if item['勾稽一致'] else '不一致' }}</td><td class="num">{{ item['未解释行数'] }}</td></tr>
+  {% else %}
+    <tr><td colspan="5" class="empty">账本尚无说明，点击上方按钮签发。</td></tr>
+  {% endfor %}
+  </tbody></table></div>
+  <h2>审计流水</h2>
+  <div class="scroll"><table><thead><tr><th>#</th><th>事件</th><th>说明编号</th><th>时间</th><th>流水哈希</th></tr></thead><tbody>
+  {% for item in audit_trail %}
+    <tr><td class="num">{{ item['序号'] }}</td><td>{{ item['事件'] }}</td><td>{{ item['说明编号'] }}</td><td>{{ item['时间'] }}</td><td><code>{{ item['流水哈希'][:20] }}…</code></td></tr>
+  {% else %}
+    <tr><td colspan="5" class="empty">暂无审计事件。</td></tr>
+  {% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+{% endblock %}

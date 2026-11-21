@@ -14,6 +14,7 @@
 | M5 回滚校验 | 核对写入前后与恢复哈希 | `GET /api/rollback/{id}` | `app/modules/m5_rollback/service.py` | `tests/test_rollback.py` |
 | M6 行数勾稽 | 守恒比较影响分区、源记录和行数 | `GET /api/reconcile/{id}` | `app/modules/m6_reconcile/service.py` | `tests/test_reconcile.py` |
 | M7 版本签发 | 在近期计划中复用并下载清单 | `GET /api/release/{id}` | `app/modules/m7_release/service.py` | `tests/test_release.py` |
+| M8 差额说明 | 解释目标分区与基线差额并签发不可变说明 | `GET /api/variance/{id}` | `app/modules/m8_variance/service.py` | `tests/test_variance.py` |
 
 ## 陷阱登记
 
@@ -29,6 +30,10 @@
 | TRAP-20 | clean.json 添加回边 | 排序丢结点或死循环 | 深度优先检测访问栈 | `app/modules/m2_graph/service.py` | `tests/test_graph.py::test_cycle_path_from_sample` |
 | TRAP-23 | nightly.json 截点紧邻滞后一日 | 越界写入 | 分区日显式切界 | `app/modules/m4_schedule/expansion.py` | `tests/test_schedule.py::test_cutoff_included_but_lagged_next_day_excluded` |
 | TRAP-26 | 演练前计划引用旧指针 | 覆盖新版本 | 检查所有写入前置值 | `app/modules/m5_rollback/service.py` | `tests/test_rollback.py::test_stale_snapshot_atomic` |
+| TRAP-31 | 改键后撞在一起的两条记录 | 计入来源团队迟到账，来源被多记一笔 | 客观原因 KEY_COLLISION 两口径均归平台键治理团队，`计入来源迟到=false` | `app/modules/m8_variance/service.py` | `tests/test_variance.py::test_key_collision_never_charged_to_source_team` |
+| TRAP-32 | 重放重试再次签发说明 | 页面出现重复说明 | 说明编号=计划编号+正文哈希，只追加账本 `INSERT OR IGNORE`，重试返回 reused | `app/modules/m8_variance/store.py` | `tests/test_variance.py::test_retry_does_not_create_new_statement` |
+| TRAP-33 | 差额合计与勾稽行数变化不一致 | 带差额对外发布 | 不一致直接拒绝出说明（VARIANCE_TIE），守恒校验写回正文 | `app/modules/m8_variance/service.py` | `tests/test_variance.py::test_variance_total_ties_to_reconcile` |
+| TRAP-34 | 旧说明被误删 | 无法回查 | 账本无更新/删除通道，DELETE/PUT/PATCH 返回 405；审计流水只追加并留哈希 | `app/modules/m8_variance/handler.py` | `tests/test_variance.py::test_http_issue_idempotent_and_delete_refused` |
 
 ## 已知边界
 

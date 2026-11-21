@@ -12,6 +12,7 @@ from app.modules.m4_schedule.expansion import impact
 from app.modules.m4_schedule.service import assemble
 from app.modules.m5_rollback.service import rehearse
 from app.modules.m6_reconcile.service import compare
+from app.modules.m8_variance.service import build_variance
 
 
 def digest(raw):
@@ -34,6 +35,7 @@ def safe_counts(value):
 
 def compute(raw):
     began = perf_counter()
+    plan_id = identity(raw)
     value = read_bundle(raw)
     registered = catalog(value["datasets"])
     order = topology(registered)
@@ -44,8 +46,9 @@ def compute(raw):
     rejected = sorted(isolated + late, key=lambda r: r["源行"])
     check = compare(tasks, len(value["changes"]), len(valid), len(rejected), len(duplicates))
     simulation = rehearse(current, tasks)
+    variance = build_variance(value, tasks, check, plan_id, digest(raw)) if value.get("arrivals") else None
     summary = {
-        "编号": identity(raw),
+        "编号": plan_id,
         "规则": VERSION,
         "文件摘要": digest(raw),
         "参数摘要": fingerprint(value["through"]),
@@ -62,6 +65,7 @@ def compute(raw):
         "隔离": rejected,
         "重复": duplicates,
         "回滚": simulation,
+        "差额说明": variance,
         "依赖": [
             {
                 "数据集": name,

@@ -1,0 +1,154 @@
+{
+  "datasets": [
+    {
+      "id": "orders",
+      "revision": "build-04",
+      "inputs": []
+    },
+    {
+      "id": "facts",
+      "revision": "build-04",
+      "inputs": [
+        {
+          "dataset": "orders",
+          "lag": 0
+        }
+      ]
+    }
+  ],
+  "heads": [
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "version": "o1",
+      "rows": 100
+    },
+    {
+      "dataset": "facts",
+      "day": "2026-11-20",
+      "version": "f1",
+      "rows": 100
+    }
+  ],
+  "changes": [
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "version": "o2",
+      "rows": 110,
+      "previous": "o1"
+    },
+    {
+      "dataset": "facts",
+      "day": "2026-11-20",
+      "version": "f2",
+      "rows": 110,
+      "previous": "f1"
+    }
+  ],
+  "through": "2026-11-20",
+  "baseline": [
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "rows": 100
+    },
+    {
+      "dataset": "facts",
+      "day": "2026-11-20",
+      "rows": 100
+    }
+  ],
+  "arrivals": [
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "team": "orders-team",
+      "source_line": 41,
+      "source_ref": "orders-team/2026-11-20.csv#41",
+      "business_key": "BK-1001",
+      "remapped": false,
+      "impact_rows": 2,
+      "arrived_after_freeze": true,
+      "kind": "revision"
+    },
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "team": "orders-team",
+      "source_line": 58,
+      "source_ref": "orders-team/2026-11-20.csv#58",
+      "business_key": "BK-2002",
+      "remapped": false,
+      "impact_rows": 2,
+      "arrived_after_freeze": true,
+      "kind": "revision"
+    },
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "team": "orders-team",
+      "source_line": 59,
+      "source_ref": "orders-team/2026-11-20.csv#59",
+      "business_key": "BK-2002",
+      "remapped": false,
+      "impact_rows": 2,
+      "arrived_after_freeze": true,
+      "kind": "duplicate"
+    },
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "team": "buyers-team",
+      "source_line": 11,
+      "source_ref": "buyers-team/legacy-part-09.csv#11",
+      "business_key": "LEGACY-76",
+      "target_key": "BK-3004",
+      "original_partition": "orders@2026-11-19",
+      "remapped": true,
+      "impact_rows": 2,
+      "arrived_after_freeze": false,
+      "kind": "merge"
+    },
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "team": "buyers-team",
+      "source_line": 12,
+      "source_ref": "buyers-team/legacy-part-09.csv#12",
+      "business_key": "LEGACY-77",
+      "target_key": "BK-3003",
+      "original_partition": "orders@2026-11-19",
+      "remapped": true,
+      "impact_rows": 1,
+      "arrived_after_freeze": false,
+      "kind": "collision"
+    },
+    {
+      "dataset": "orders",
+      "day": "2026-11-20",
+      "team": "buyers-team",
+      "source_line": 13,
+      "source_ref": "buyers-team/legacy-part-09.csv#13",
+      "business_key": "LEGACY-78",
+      "target_key": "BK-3003",
+      "original_partition": "orders@2026-11-19",
+      "remapped": true,
+      "impact_rows": -3,
+      "arrived_after_freeze": false,
+      "kind": "collision"
+    },
+    {
+      "dataset": "facts",
+      "day": "2026-11-20",
+      "team": "metrics-team",
+      "source_line": 7,
+      "source_ref": "metrics-team/retro-batch.json#7",
+      "business_key": "BK-9001",
+      "remapped": false,
+      "impact_rows": 4,
+      "arrived_after_freeze": true,
+      "kind": "revision"
+    }
+  ]
+}

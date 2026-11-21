@@ -4,6 +4,7 @@ from app.config import MAX_BYTES
 from app.keys import ReplayError
 
 FIELDS = {"datasets", "heads", "changes", "through"}
+OPTIONAL_FIELDS = {"baseline", "arrivals"}
 
 
 def read_bundle(raw):
@@ -13,10 +14,13 @@ def read_bundle(raw):
         value = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique)
     except (ValueError, RecursionError) as exc:
         raise ReplayError("JSON", "文件须为完整 UTF-8 JSON") from exc
-    if not isinstance(value, dict) or set(value) != FIELDS:
+    if not isinstance(value, dict) or not FIELDS <= set(value) <= FIELDS | OPTIONAL_FIELDS:
         raise ReplayError("FIELDS", "清单字段不完整")
     for key in FIELDS - {"through"}:
         if not isinstance(value[key], list) or len(value[key]) > 300:
+            raise ReplayError("LIMIT", "单组清单最多 300 行")
+    for key in OPTIONAL_FIELDS:
+        if key in value and (not isinstance(value[key], list) or len(value[key]) > 300):
             raise ReplayError("LIMIT", "单组清单最多 300 行")
     return value
 
